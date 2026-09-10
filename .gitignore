@@ -58,7 +58,8 @@ results/
 *.log
 *.tmp
 *.temp
-
+# External reference materials
+Екатерина/
 # Python coverage
 .coverage
 htmlcov/
