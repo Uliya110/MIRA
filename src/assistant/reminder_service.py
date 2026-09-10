@@ -42,7 +42,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Callable, List, Optional, Protocol
 
-from analysis_schema_v2 import (
+from .analysis_schema_v2 import (
     ReminderItem,
     ReminderStatus,
 )
@@ -433,7 +433,7 @@ if __name__ == "__main__":
     затем запускаем сервис.
     """
 
-    from analysis_schema_v2 import (
+    from .analysis_schema_v2 import (
         ReminderKind,
     )
 

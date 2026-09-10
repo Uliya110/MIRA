@@ -46,7 +46,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Protocol, Tuple, Any
 
-from analysis_schema_v2 import (
+from .analysis_schema_v2 import (
     Agreement,
     AnalysisResult,
     ConflictAssessment,

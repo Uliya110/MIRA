@@ -40,7 +40,7 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Iterable, List, Optional
 
-from analysis_schema_v2 import (
+from .analysis_schema_v2 import (
     Attachment,
     AttachmentType,
     ContactRole,
@@ -52,7 +52,7 @@ from analysis_schema_v2 import (
     ProjectReference,
     Speaker,
 )
-from dialogue_store import (
+from .dialogue_store import (
     DialogueContextBundle,
     DuplicateMessageError,
 )

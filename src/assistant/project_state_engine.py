@@ -45,7 +45,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from analysis_schema_v2 import (
+from .analysis_schema_v2 import (
     Agreement,
     AnalysisResult,
     ReminderItem,
@@ -1193,7 +1193,7 @@ if __name__ == "__main__":
     3. Старое требование перестаёт быть активным.
     """
 
-    from analysis_schema_v2 import (
+    from .analysis_schema_v2 import (
         IntentItem,
         IntentType,
         MessageAnalysis,

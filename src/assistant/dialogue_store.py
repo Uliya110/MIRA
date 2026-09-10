@@ -42,7 +42,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, Iterable, List, Optional, Tuple
 
-from analysis_schema_v2 import MessageEnvelope
+from .analysis_schema_v2 import MessageEnvelope
 
 
 class DuplicateMessageError(ValueError):

@@ -32,7 +32,7 @@ from typing import Dict, List, Optional
 import torch
 from transformers import AutoModelForSequenceClassification, AutoTokenizer
 
-from analysis_schema_v2 import (
+from .analysis_schema_v2 import (
     IntentItem,
     IntentType,
     MessageAnalysis,
