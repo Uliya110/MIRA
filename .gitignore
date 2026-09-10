@@ -7,8 +7,10 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.pytest_cache/
+.mypy_cache/
 
-# Envs
+# Virtual environments
 .venv/
 venv/
 env/
@@ -16,13 +18,47 @@ env/
 # Jupyter
 .ipynb_checkpoints/
 
+# IDE
+.vscode/
+.idea/
+
 # OS
 .DS_Store
 Thumbs.db
 
-# Data (не храним большие/секретные данные в Git)
+# Secrets and local configs
+.env
+.env.*
+!.env.example
+
+# Data
+# Реальные переписки и рабочие датасеты не публикуем
 data/*
 !data/.gitkeep
 
-# Local configs
-*.env
+# Trained models
+# Обученные веса и служебные файлы моделей не храним в Git
+models/
+*.keras
+*.h5
+*.pkl
+*.pt
+*.pth
+*.safetensors
+
+# Experiment results
+results/
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp
+
+# Python coverage
+.coverage
+htmlcov/
