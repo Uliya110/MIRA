@@ -1,25 +1,30 @@
 # -*- coding: utf-8 -*-
 """
-MIRA — Pretrained Intent Adapter
-================================
+MIRA — адаптер предварительно обученной модели смысловых категорий
+===================================================================
 
 Рекомендуемое расположение:
     MIRA/src/assistant/pretrained_intent_adapter.py
 
 Назначение:
-- загружает локально сохранённую pretrained-модель intent:
+- загружает локально сохранённую предварительно обученную модель,
+  дообученную для определения смысловой категории сообщения:
       MIRA/models/pretrained_intent/
-- реализует контракт ExternalLanguageAnalyzer;
-- преобразует русский single-label baseline в IntentItem;
-- НЕ заменяет rule-based/context логику AnalysisEngine.
+- реализует общий интерфейс ExternalLanguageAnalyzer, который использует
+  центральный анализатор MIRA;
+- преобразует результат модели в структуры IntentItem и MessageAnalysis;
+- работает как смысловой слой и не заменяет программные правила,
+  контекст проекта и защитные проверки AnalysisEngine.
 
 Важно:
-текущая RuBERT-модель обучалась как single-label классификатор.
-Поэтому adapter возвращает один основной semantic intent.
-Multi-label поведение MIRA на этом этапе получается гибридно:
-    pretrained intent + rule-based secondary intents.
-Позже этот adapter можно заменить настоящей multi-label моделью,
-не меняя AnalysisEngine.
+текущая подключаемая здесь RuBERT-модель является однометочной:
+для одного сообщения она выбирает одну основную смысловую категорию.
+AnalysisEngine объединяет её результат с программными правилами,
+поэтому итоговый анализ MIRA может содержать несколько категорий.
+
+Отдельная контекстная многометочная модель развивается и проверяется
+как следующий уровень смыслового анализа. Благодаря общему интерфейсу
+её можно подключить позднее без перестройки остальной архитектуры MIRA.
 """
 
 from __future__ import annotations
@@ -71,9 +76,10 @@ class IntentPrediction:
 
 class PretrainedIntentAdapter:
     """
-    Adapter между Hugging Face sequence-classifier и MIRA MessageAnalysis.
+    Связующий модуль между классификатором Hugging Face
+    и внутренней структурой анализа MIRA MessageAnalysis.
 
-    Совместим с контрактом:
+    Совместим с общим интерфейсом:
         ExternalLanguageAnalyzer.analyze(message) -> MessageAnalysis
     """
 
@@ -92,7 +98,7 @@ class PretrainedIntentAdapter:
 
         if not self.model_dir.exists():
             raise FileNotFoundError(
-                "Не найдена pretrained intent-модель MIRA:\n"
+                "Не найдена предварительно обученная модель MIRA:\n"
                 f"{self.model_dir}\n\n"
                 "Сначала запустите train_pretrained_intent.py."
             )
@@ -117,10 +123,10 @@ class PretrainedIntentAdapter:
 
     def analyze(self, message: MessageEnvelope) -> MessageAnalysis:
         """
-        Возвращает только semantic-часть анализа.
+        Возвращает смысловую часть анализа сообщения.
 
-        Tasks, requirements, deadlines, finance и другие structured fields
-        остаются за hybrid AnalysisEngine.
+        Задачи, требования, сроки, финансовые вопросы и другие
+        структурированные данные остаются за гибридным AnalysisEngine.
         """
         text = (message.text or "").strip()
 
@@ -170,8 +176,9 @@ class PretrainedIntentAdapter:
         """
         Диагностическая функция.
 
-        Возвращает top-k softmax, но analyze() использует только top-1,
-        потому что текущая модель обучалась как single-label.
+        Возвращает несколько наиболее вероятных категорий по softmax,
+        но analyze() использует только первую, потому что текущая
+        модель обучалась как однометочная.
         """
         cleaned = (text or "").strip()
 
@@ -222,9 +229,10 @@ class PretrainedIntentAdapter:
 
     def _load_id2label(self) -> Dict[int, str]:
         """
-        Сначала используем Hugging Face config.
-        Если там остались LABEL_0... — читаем label_mapping.json,
-        созданный train_pretrained_intent.py.
+        Сначала используем настройки модели Hugging Face.
+        Если там остались служебные метки LABEL_0... — читаем
+        файл соответствия категорий label_mapping.json, созданный
+        скриптом обучения train_pretrained_intent.py.
         """
         config_mapping = {
             int(key): str(value)
@@ -277,7 +285,8 @@ class PretrainedIntentAdapter:
 
         if unknown:
             raise ValueError(
-                "Pretrained-модель содержит неизвестные MIRA labels: "
+                "Предварительно обученная модель содержит неизвестные "
+                "MIRA-метки: "
                 + ", ".join(unknown)
             )
 
@@ -308,8 +317,8 @@ class PretrainedIntentAdapter:
 
         raise RuntimeError(
             "Не удалось определить корень проекта MIRA. "
-            "Положите adapter в MIRA/src/assistant/ "
-            "или передайте config.model_dir явно."
+            "Положите адаптер в MIRA/src/assistant/ "
+            "или явно укажите путь к модели через config.model_dir."
         )
 
     @staticmethod
@@ -322,14 +331,16 @@ class PretrainedIntentAdapter:
         if normalized == "cuda":
             if not torch.cuda.is_available():
                 raise RuntimeError(
-                    "Запрошено device='cuda', но CUDA недоступна."
+                    "Запрошена CUDA для вычислений, но она недоступна."
                 )
             return torch.device("cuda")
 
         if normalized == "cpu":
             return torch.device("cpu")
 
-        raise ValueError("device должен быть: auto, cpu или cuda.")
+        raise ValueError(
+            "Устройство вычислений (device) должно быть: auto, cpu или cuda."
+        )
 
     @staticmethod
     def _single_project_or_none(
@@ -349,14 +360,14 @@ if __name__ == "__main__":
         "Да, получила. Спасибо!",
     ]
 
-    print("MIRA pretrained intent adapter")
-    print("Model:", adapter.model_dir)
-    print("Device:", adapter.device)
+    print("MIRA — адаптер предварительно обученной модели")
+    print("Модель:", adapter.model_dir)
+    print("Устройство вычислений:", adapter.device)
 
     for sample in samples:
         prediction = adapter.predict(sample)
         print("\nТекст:")
         print(sample)
-        print("Intent:", prediction.intent.value)
-        print("Train label:", prediction.train_label)
-        print("Confidence:", round(prediction.confidence, 4))
+        print("Смысловая категория:", prediction.intent.value)
+        print("Метка обучения:", prediction.train_label)
+        print("Уверенность модели:", round(prediction.confidence, 4))
